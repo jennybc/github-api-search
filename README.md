@@ -3,110 +3,76 @@ Here's what we're trying to match via API:
 
 <https://github.com/issues?q=is%3Aissue+author%3Atimelyportfolio+is%3Aopen>
 
-I see 194 open issues.
+I see 194 open issues (I wrote this 2016-02-11).
 
-Here's the relevant API endpoint:
+I can get them from the API at the command line with this:
 
-<https://developer.github.com/v3/search/#search-issues>
+``` bash
+curl -o out.json https://api.github.com/search/issues?q=is:issue+author:timelyportfolio+is:open
+head out.json
+```
 
-You can't just provide the search terms as params to `gh()`. They need to be pre-processed.
+    ##   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+    ##                                  Dload  Upload   Total   Spent    Left  Speed
+    ## 
+      0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+      0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+    100 71147  100 71147    0     0  81682      0 --:--:-- --:--:-- --:--:-- 81684
+    ## {
+    ##   "total_count": 194,
+    ##   "incomplete_results": false,
+    ##   "items": [
+    ##     {
+    ##       "url": "https://api.github.com/repos/hadley/svglite/issues/58",
+    ##       "repository_url": "https://api.github.com/repos/hadley/svglite",
+    ##       "labels_url": "https://api.github.com/repos/hadley/svglite/issues/58/labels{/name}",
+    ##       "comments_url": "https://api.github.com/repos/hadley/svglite/issues/58/comments",
+    ##       "events_url": "https://api.github.com/repos/hadley/svglite/issues/58/events",
+
+This little exercise exposed some problems with `gh` and maybe even `httr`. But here's a way to patch things up for now:
 
 ``` r
+## devtools::install_github("gaborcsardi/gh")
 library(gh)
+library(purrr)
 
-search_q <- list(author = "timelyportfolio", is = "open")
-(search_q <- paste(names(search_q), search_q, sep = "=", collapse = "+"))
+author <- "timelyportfolio"
+state <- "open"
+is <- "issue"
+search_q <- list(author = author, state = state, is = is)
+(search_q <- paste(names(search_q), search_q, sep = ":", collapse = " "))
 ```
 
-    ## [1] "author=timelyportfolio+is=open"
+    ## [1] "author:timelyportfolio state:open is:issue"
 
 ``` r
-## this causes us to get an empty list !?!
-## (search_q <- paste(names(search_q), search_q, sep = ":", collapse = "+"))
-## (search_q <- URLencode(search_q, reserved = TRUE))
-x <- gh("/search/issues", q = search_q, .limit = Inf)
-str(x, max.level = 1)
+res <- gh("/search/issues", q = search_q, .limit = Inf) 
+## OK this is not ideal but we can work with it
+str(res, max.level = 1)
 ```
 
-    ## List of 3
-    ##  $ total_count       : int 14
-    ##  $ incomplete_results: logi FALSE
-    ##  $ items             :List of 14
-    ##  - attr(*, "method")= chr "GET"
-    ##  - attr(*, "response")=List of 24
-    ##   ..- attr(*, "class")= chr [1:2] "insensitive" "list"
-    ##  - attr(*, ".send_headers")= Named chr [1:2] "application/vnd.github.v3+json" "https://github.com/gaborcsardi/whoami"
-    ##   ..- attr(*, "names")= chr [1:2] "Accept" "User-Agent"
-    ##  - attr(*, "class")= chr [1:2] "gh_response" "list"
-
-``` r
-length(x$items)
-```
-
-    ## [1] 14
-
-The actual issues appear in `items`. But I only get 14! A far cry from 194.
-
-The structure of what's returned is problematic (`total_count`, `incomplete_results`, `items`) and won't play well with `gh`'s approach to de-pagination. But since we get a ridiculously small number of results, we aren't able to see that problem yet here. It almost feels like the search terms mean something different via API vs browser?
-
-What if I try one of the search examples from the API docs? Basically success. We do seem to retrieve the relevant results and we get a demo of how the search results don't play well with `gh`'s pagination.
-
-``` r
-search_q <- list(label = "bug", language = "python", state = "open")
-search_q <- c("windows", paste(names(search_q), search_q, sep = "="))
-(search_q <- paste(search_q, collapse = "+"))
-```
-
-    ## [1] "windows+label=bug+language=python+state=open"
-
-``` r
-x <- gh("/search/issues", q = search_q, .limit = Inf)
-str(x, max.level = 1)
-```
-
-    ## List of 42
-    ##  $ total_count       : int 394
+    ## List of 21
+    ##  $ total_count       : int 194
     ##  $ incomplete_results: logi FALSE
     ##  $ items             :List of 30
-    ##  $ NA                : int 394
+    ##  $ NA                : int 194
     ##  $ NA                : logi FALSE
     ##  $ NA                :List of 30
-    ##  $ NA                : int 394
+    ##  $ NA                : int 194
     ##  $ NA                : logi FALSE
     ##  $ NA                :List of 30
-    ##  $ NA                : int 394
+    ##  $ NA                : int 194
     ##  $ NA                : logi FALSE
     ##  $ NA                :List of 30
-    ##  $ NA                : int 394
+    ##  $ NA                : int 194
     ##  $ NA                : logi FALSE
     ##  $ NA                :List of 30
-    ##  $ NA                : int 394
+    ##  $ NA                : int 194
     ##  $ NA                : logi FALSE
     ##  $ NA                :List of 30
-    ##  $ NA                : int 394
+    ##  $ NA                : int 194
     ##  $ NA                : logi FALSE
-    ##  $ NA                :List of 30
-    ##  $ NA                : int 394
-    ##  $ NA                : logi FALSE
-    ##  $ NA                :List of 30
-    ##  $ NA                : int 394
-    ##  $ NA                : logi FALSE
-    ##  $ NA                :List of 30
-    ##  $ NA                : int 394
-    ##  $ NA                : logi FALSE
-    ##  $ NA                :List of 30
-    ##  $ NA                : int 394
-    ##  $ NA                : logi FALSE
-    ##  $ NA                :List of 30
-    ##  $ NA                : int 394
-    ##  $ NA                : logi FALSE
-    ##  $ NA                :List of 30
-    ##  $ NA                : int 394
-    ##  $ NA                : logi FALSE
-    ##  $ NA                :List of 30
-    ##  $ NA                : int 394
-    ##  $ NA                : logi FALSE
-    ##  $ NA                :List of 4
+    ##  $ NA                :List of 14
     ##  - attr(*, "method")= chr "GET"
     ##  - attr(*, "response")=List of 25
     ##   ..- attr(*, "class")= chr [1:2] "insensitive" "list"
@@ -114,8 +80,33 @@ str(x, max.level = 1)
     ##   ..- attr(*, "names")= chr [1:2] "Accept" "User-Agent"
     ##  - attr(*, "class")= chr [1:2] "gh_response" "list"
 
+`res` now contains what we need, in a terribly awkward form, because `gh`'s current approach to traversing pages is not prepared for the unexpected behavior of the API's search endpoint :confused:. It returns something quite different from the other endpoints.
+
+Let's dig out what we need. I display the top of a data frame with one row per issue and, for now, issue title and it's browser URL.
+
 ``` r
-length(x)
+good_stuff <- res %>% 
+  keep(is_list) %>% 
+  flatten()
+df <- good_stuff %>%
+ map_df(`[`, c("title", "html_url")) # extract other bits as needed here!
+df %>%
+  dplyr::transmute(title = substr(title, 1, 30),
+                   html_url = paste0("...", substr(html_url, 20, 45), "..."))
 ```
 
-    ## [1] 42
+    ## Source: local data frame [194 x 2]
+    ## 
+    ##                             title                         html_url
+    ##                             (chr)                            (chr)
+    ## 1  performance hit with svgstring   ...hadley/svglite/issues/58...
+    ## 2  fix editSVG to work with new i   ...hadley/svglite/issues/56...
+    ## 3                       accordion ...timelyportfolio/buildingwi...
+    ## 4                   love the idea ...w8r/leaflet-schematic/issu...
+    ## 5             add d3-lasso-plugin   ...juba/scatterD3/issues/19...
+    ## 6  consider/add another xml viewe  ...hrbrmstr/xmlview/issues/3...
+    ## 7  link to listviewer issue reque  ...hrbrmstr/xmlview/issues/1...
+    ## 8             resizable component ...timelyportfolio/buildingwi...
+    ## 9               doSlide or swiper ...timelyportfolio/buildingwi...
+    ## 10 allow non-date data with d3kit ...timelyportfolio/timelineR/...
+    ## ..                            ...                              ...
