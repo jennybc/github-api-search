@@ -2,24 +2,39 @@
 output: github_document
 ---
 
-Here's what we're trying to match via API:
+## Searching GitHub via the API
+
+A "five minute exercise" triggered by a twitter conversation with [\@pssguy](https://github.com/pssguy) re: his [Shiny app for inspecting someone's GitHub issues](https://mytinyshinys.shinyapps.io/githubAnalyses/).
+
+Goal: do this issue search via the GitHub API:
 
 <https://github.com/issues?q=is%3Aissue+author%3Atimelyportfolio+is%3Aopen>
 
-I see 194 open issues (I wrote this 2016-02-11).
+### curl
+
+In the browser, I see 194 open issues (I wrote this 2016-02-11).
 
 I can get them from the API at the command line with this:
 
 ```{r engine='bash'}
-curl -o out.json https://api.github.com/search/issues?q=is:issue+author:timelyportfolio+is:open
+curl -o out.json https://api.github.com/search/issues?q=is:issue+author:timelyportfolio+state:open
 head out.json
 ```
+
+### gh
 
 Here's the relevant GitHub API endpoint:
 
 <https://developer.github.com/v3/search/#search-issues>
 
-You can't just provide the search terms as params to `gh()`. They need to be pre-processed. This little exercise exposed some problems with `gh` and maybe even `httr`. But here's a way to patch things up for now:
+We can't just provide the search terms as params to `gh()`. They need to be pre-processed into a query string. This little exercise exposed some problems:
+
+  * with `gh`: This structure of what this endpoint returns is [not compatible with the current approach to page traversal](https://github.com/gaborcsardi/gh/issues/33). 
+  * and maybe `httr` as well: [This issue](https://github.com/hadley/httr/issues/335) about the encoding/decoding of `+` may be part of the story here.
+
+But that can all be worked around!
+
+#### Retrieve issues via API search
 
 ```{r}
 ## devtools::install_github("gaborcsardi/gh")
@@ -29,8 +44,10 @@ library(purrr)
 author <- "timelyportfolio"
 state <- "open"
 is <- "issue"
+
 search_q <- list(author = author, state = state, is = is)
 (search_q <- paste(names(search_q), search_q, sep = ":", collapse = " "))
+
 res <- gh("/search/issues", q = search_q, .limit = Inf) 
 ## OK this is not ideal but we can work with it
 str(res, max.level = 1)
@@ -38,15 +55,17 @@ str(res, max.level = 1)
 
 `res` now contains what we need, in a terribly awkward form, because `gh`'s current approach to traversing pages is not prepared for the unexpected behavior of the API's search endpoint :confused:. It returns something quite different from the other endpoints.
 
+#### Extract info and put it in a data frame
+
 Let's dig out what we need. I display the top of a data frame with one row per issue and, for now, issue title and it's browser URL.
 
 ```{r}
 good_stuff <- res %>% 
-  keep(is_list) %>% 
-  flatten()
+  keep(is_list) %>% # this happens to retain what we want = pages of results
+  flatten()         # get one big list of issues
 df <- good_stuff %>%
  map_df(`[`, c("title", "html_url")) # extract other bits as needed here!
-df %>%
+df %>%                               # just for display purposes
   dplyr::transmute(title = substr(title, 1, 30),
                    html_url = paste0("...", substr(html_url, 20, 45), "..."))
 ```
