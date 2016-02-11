@@ -16,8 +16,8 @@ head out.json
     ##                                  Dload  Upload   Total   Spent    Left  Speed
     ## 
       0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-      0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-    100 71147  100 71147    0     0  81682      0 --:--:-- --:--:-- --:--:-- 81684
+      0 71147    0   272    0     0    445      0  0:02:39 --:--:--  0:02:39   445
+    100 71147  100 71147    0     0  90262      0 --:--:-- --:--:-- --:--:-- 90173
     ## {
     ##   "total_count": 194,
     ##   "incomplete_results": false,
@@ -29,7 +29,11 @@ head out.json
     ##       "comments_url": "https://api.github.com/repos/hadley/svglite/issues/58/comments",
     ##       "events_url": "https://api.github.com/repos/hadley/svglite/issues/58/events",
 
-This little exercise exposed some problems with `gh` and maybe even `httr`. But here's a way to patch things up for now:
+Here's the relevant GitHub API endpoint:
+
+<https://developer.github.com/v3/search/#search-issues>
+
+You can't just provide the search terms as params to `gh()`. They need to be pre-processed. This little exercise exposed some problems with `gh` and maybe even `httr`. But here's a way to patch things up for now:
 
 ``` r
 ## devtools::install_github("gaborcsardi/gh")
