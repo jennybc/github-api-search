@@ -15,10 +15,10 @@ You can't just provide the search terms as params to `gh()`. They need to be pre
 library(gh)
 
 search_q <- list(author = "timelyportfolio", is = "open")
-(search_q <- paste(names(search_q), search_q, sep = "=", collapse = "&"))
+(search_q <- paste(names(search_q), search_q, sep = "=", collapse = "+"))
 ```
 
-    ## [1] "author=timelyportfolio&is=open"
+    ## [1] "author=timelyportfolio+is=open"
 
 ``` r
 x <- gh("/search/issues", q = search_q, .limit = Inf)

@@ -18,7 +18,7 @@ You can't just provide the search terms as params to `gh()`. They need to be pre
 library(gh)
 
 search_q <- list(author = "timelyportfolio", is = "open")
-(search_q <- paste(names(search_q), search_q, sep = "=", collapse = "&"))
+(search_q <- paste(names(search_q), search_q, sep = "=", collapse = "+"))
 x <- gh("/search/issues", q = search_q, .limit = Inf)
 str(x, max.level = 1)
 length(x$items)
