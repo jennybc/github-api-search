@@ -21,6 +21,9 @@ search_q <- list(author = "timelyportfolio", is = "open")
     ## [1] "author=timelyportfolio+is=open"
 
 ``` r
+## this causes us to get an empty list !?!
+## (search_q <- paste(names(search_q), search_q, sep = ":", collapse = "+"))
+## (search_q <- URLencode(search_q, reserved = TRUE))
 x <- gh("/search/issues", q = search_q, .limit = Inf)
 str(x, max.level = 1)
 ```
