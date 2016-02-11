@@ -47,9 +47,9 @@ length(x$items)
 
 The actual issues appear in `items`. But I only get 14! A far cry from 194.
 
-The structure of what's returned is problematic (`total_count`, `incomplete_results`, `items`) and won't play well with pagination. But even the first page is "short", i.e. contains only 14 issues and no "next" link. So we don't even get enough results to see that problem. What's up with that?
+The structure of what's returned is problematic (`total_count`, `incomplete_results`, `items`) and won't play well with `gh`'s approach to de-pagination. But since we get a ridiculously small number of results, we aren't able to see that problem yet here. It almost feels like the search terms mean something different via API vs browser?
 
-What if I try their example? Mixed success. We can at least see that we retrieve many pages, though this does not play well with `gh`'s pagination.
+What if I try one of the search examples from the API docs? Basically success. We do seem to retrieve the relevant results and we get a demo of how the search results don't play well with `gh`'s pagination.
 
 ``` r
 search_q <- list(label = "bug", language = "python", state = "open")
