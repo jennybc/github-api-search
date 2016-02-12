@@ -1,0 +1,98 @@
+---
+Title: Query encoding
+output: github_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+*Taking a closer look at the query encoding issue. Eventually led to comments on [iss #335 encoding/decoding '+' as space (rather than literal '+' sign)](https://github.com/hadley/httr/issues/335) and a [pull request](https://github.com/hadley/httr/pull/337).*
+
+Example of advanced Github search in the browser (purposefully chose example with small number of issues -- this is not about pagination):
+
+<https://github.com/search?utf8=✓&q=type%3Aissue+author%3Ahadley+repo%3Arstudio%2Frstudioapi+state%3Aopen&type=Issues&ref=searchresults>
+
+I see 4 issues.
+
+Get them via API from the command line
+
+```{r engine='bash'}
+curl -o hadley-rstudioapi.json https://api.github.com/search/issues?q=type:issue+author:hadley+repo:rstudio/rstudioapi+state:open
+head hadley-rstudioapi.json
+```
+
+Again, 4 issues.
+
+How to get them from R? First, assemble all terms in a list.
+
+```{r}
+library(gh)
+library(purrr)
+library(httr)
+suppressPackageStartupMessages(library(dplyr))
+
+type <- "issue"
+author <- "hadley"
+repo <- "rstudio/rstudioapi"
+state <- "open"
+(search_terms <- lst(type, author, repo, state))
+```
+
+Function to create query string with `sep` between field and value and `collapse` between field-value pairs.
+
+```{r}
+make_query <- function(terms, sep = ":", collapse = " ") {
+  paste(names(terms), terms, sep = sep, collapse = collapse)
+}
+```
+
+Form query with `sep` set to `+` and ` `.
+
+```{r}
+(query_plus <- make_query(search_terms, collapse = "+"))
+(query_space <- make_query(search_terms, collapse = " "))
+```
+
+Use `gh` with both queries.
+
+```{r error = TRUE}
+## space works
+res <- gh("/search/issues", q = query_space, .limit = Inf) 
+res$total_count
+#jsonlite::toJSON(res$items[[1]], pretty = TRUE, auto_unbox = TRUE)
+
+## `+` does not work
+res <- gh("/search/issues", q = query_plus, .limit = Inf) 
+```
+
+Use `httr` with both queries.
+
+```{r error = TRUE}
+## space works if passed through modify_url
+(url <- modify_url("https://api.github.com", path = "search/issues", 
+                   query = list(q = query_space)))
+x <- GET(url)
+status_code(x)
+length(content(x)$items)
+
+## `+` does not work when passed through modify_url
+(url <- modify_url("https://api.github.com", path = "search/issues", 
+                   query = list(q = query_plus)))
+x <- GET(url)
+status_code(x)
+
+## space used literally does not work, of course
+(url <- paste0("https://api.github.com/search/issues?q=", query_space))
+x <- GET(url)
+status_code(x)
+
+## `+` used literally does work
+(url <- paste0("https://api.github.com/search/issues?q=", query_plus))
+x <- GET(url)
+status_code(x)
+length(content(x)$items)
+```
