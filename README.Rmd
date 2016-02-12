@@ -1,5 +1,7 @@
 ---
-output: github_document
+output:
+  github_document:
+    toc: true
 ---
 
 ```{r setup, include = FALSE}
@@ -76,3 +78,47 @@ df %>%                               # just for display purposes
   dplyr::transmute(title = substr(title, 1, 30),
                    html_url = paste0("...", substr(html_url, 20, 45), "..."))
 ```
+
+### Rate limit woes
+
+If you try to use [the app](https://mytinyshinys.shinyapps.io/githubAnalyses/) for a very prolific user, you risk hitting the rate limit. I can't reliably do so here, but in the Shiny context, you're presumably sharing the rate limit with other processes. So let's fiddle with page size, an overall limit, and sorting.
+
+The basic search from above:
+
+```{r error = TRUE}
+author <- "hadley"
+state <- "open"
+is <- "issue"
+
+search_q <- list(author = author, state = state, is = is)
+(search_q <- paste(names(search_q), search_q, sep = ":", collapse = " "))
+
+res <- gh("/search/issues", q = search_q, .limit = Inf) 
+str(res, max.level = 1)
+res %>%
+  keep(is_list) %>% 
+  length()
+```
+
+Around 15 pages, of default size = 30.
+
+Ask for 100 results per page:
+
+```{r}
+res <- gh("/search/issues", q = search_q, .limit = Inf, per_page = 100) 
+str(res, max.level = 1)
+res %>%
+  keep(is_list) %>% 
+  length()
+```
+
+Down to 5 pages, of size 100. This is documented max and I tried higher numbers with no effect. This seems like a no-brainer to include in the app and reduce the API calls.
+
+We could also place an absolute limit on the number of issues. I'm trying 400, since that should truncate Hadley's results. In the app itself, a higher number probably makes sense.
+
+```{r error = TRUE}
+res <- gh("/search/issues", q = search_q, .limit = 400, per_page = 100) 
+str(res, max.level = 1)
+```
+
+Oh, right. The [mismatch between what the search API returns](https://github.com/gaborcsardi/gh/issues/33) and what `gh` expects means that `.limit` cannot be enforced here. To do this would require ditching `gh` and just using `httr` directly. But then you lose authomatic page traversal. Sigh.

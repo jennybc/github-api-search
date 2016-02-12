@@ -1,4 +1,9 @@
 
+-   [Searching GitHub via the API](#searching-github-via-the-api)
+    -   [curl](#curl)
+    -   [gh](#gh)
+    -   [Rate limit woes](#rate-limit-woes)
+
 Searching GitHub via the API
 ----------------------------
 
@@ -21,8 +26,8 @@ head timelyportolio.json
 #>                                  Dload  Upload   Total   Spent    Left  Speed
 #> 
   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
- 78 71147   78 55558    0     0  65114      0  0:00:01 --:--:--  0:00:01 65056
-100 71147  100 71147    0     0  83074      0 --:--:-- --:--:-- --:--:-- 83018
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100 71147  100 71147    0     0  86468      0 --:--:-- --:--:-- --:--:-- 86448
 #> {
 #>   "total_count": 194,
 #>   "incomplete_results": false,
@@ -127,3 +132,156 @@ df %>%                               # just for display purposes
 #> 10 allow non-date data with d3kit ...timelyportfolio/timelineR/...
 #> ..                            ...                              ...
 ```
+
+### Rate limit woes
+
+If you try to use [the app](https://mytinyshinys.shinyapps.io/githubAnalyses/) for a very prolific user, you risk hitting the rate limit. I can't reliably do so here, but in the Shiny context, you're presumably sharing the rate limit with other processes. So let's fiddle with page size, an overall limit, and sorting.
+
+The basic search from above:
+
+``` r
+author <- "hadley"
+state <- "open"
+is <- "issue"
+
+search_q <- list(author = author, state = state, is = is)
+(search_q <- paste(names(search_q), search_q, sep = ":", collapse = " "))
+#> [1] "author:hadley state:open is:issue"
+
+res <- gh("/search/issues", q = search_q, .limit = Inf) 
+str(res, max.level = 1)
+#> List of 45
+#>  $ total_count       : int 441
+#>  $ incomplete_results: logi FALSE
+#>  $ items             :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 30
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 21
+#>  - attr(*, "method")= chr "GET"
+#>  - attr(*, "response")=List of 25
+#>   ..- attr(*, "class")= chr [1:2] "insensitive" "list"
+#>  - attr(*, ".send_headers")= Named chr [1:2] "application/vnd.github.v3+json" "https://github.com/gaborcsardi/whoami"
+#>   ..- attr(*, "names")= chr [1:2] "Accept" "User-Agent"
+#>  - attr(*, "class")= chr [1:2] "gh_response" "list"
+res %>%
+  keep(is_list) %>% 
+  length()
+#> [1] 15
+```
+
+Around 15 pages, of default size = 30.
+
+Ask for 100 results per page:
+
+``` r
+res <- gh("/search/issues", q = search_q, .limit = Inf, per_page = 100) 
+str(res, max.level = 1)
+#> List of 15
+#>  $ total_count       : int 441
+#>  $ incomplete_results: logi FALSE
+#>  $ items             :List of 100
+#>   .. [list output truncated]
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 100
+#>   .. [list output truncated]
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 100
+#>   .. [list output truncated]
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 100
+#>   .. [list output truncated]
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 41
+#>  - attr(*, "method")= chr "GET"
+#>  - attr(*, "response")=List of 25
+#>   ..- attr(*, "class")= chr [1:2] "insensitive" "list"
+#>  - attr(*, ".send_headers")= Named chr [1:2] "application/vnd.github.v3+json" "https://github.com/gaborcsardi/whoami"
+#>   ..- attr(*, "names")= chr [1:2] "Accept" "User-Agent"
+#>  - attr(*, "class")= chr [1:2] "gh_response" "list"
+res %>%
+  keep(is_list) %>% 
+  length()
+#> [1] 5
+```
+
+Down to 5 pages, of size 100. This is documented max and I tried higher numbers with no effect. This seems like a no-brainer to include in the app and reduce the API calls.
+
+We could also place an absolute limit on the number of issues. I'm trying 400, since that should truncate Hadley's results. In the app itself, a higher number probably makes sense.
+
+``` r
+res <- gh("/search/issues", q = search_q, .limit = 400, per_page = 100) 
+#> condition in gh_link(gh_response, .token, "next"): GitHub API error: 403 Forbidden
+#>   API rate limit exceeded for jennybc.
+str(res, max.level = 1)
+#> List of 15
+#>  $ total_count       : int 441
+#>  $ incomplete_results: logi FALSE
+#>  $ items             :List of 100
+#>   .. [list output truncated]
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 100
+#>   .. [list output truncated]
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 100
+#>   .. [list output truncated]
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 100
+#>   .. [list output truncated]
+#>  $ NA                : int 441
+#>  $ NA                : logi FALSE
+#>  $ NA                :List of 41
+#>  - attr(*, "method")= chr "GET"
+#>  - attr(*, "response")=List of 25
+#>   ..- attr(*, "class")= chr [1:2] "insensitive" "list"
+#>  - attr(*, ".send_headers")= Named chr [1:2] "application/vnd.github.v3+json" "https://github.com/gaborcsardi/whoami"
+#>   ..- attr(*, "names")= chr [1:2] "Accept" "User-Agent"
+#>  - attr(*, "class")= chr [1:2] "gh_response" "list"
+```
+
+Oh, right. The [mismatch between what the search API returns](https://github.com/gaborcsardi/gh/issues/33) and what `gh` expects means that `.limit` cannot be enforced here. To do this would require ditching `gh` and just using `httr` directly. But then you lose authomatic page traversal. Sigh.
