@@ -2,23 +2,30 @@
 output: github_document
 ---
 
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
 ## Searching GitHub via the API
 
 A "five minute exercise" triggered by a twitter conversation with [\@pssguy](https://github.com/pssguy) re: his [Shiny app for inspecting someone's GitHub issues](https://mytinyshinys.shinyapps.io/githubAnalyses/).
 
-Goal: do this issue search via the GitHub API:
+Goal: do issue search like this via the GitHub API:
 
 <https://github.com/issues?q=is%3Aissue+author%3Atimelyportfolio+is%3Aopen>
 
 ### curl
 
-In the browser, I see 194 open issues (I wrote this 2016-02-11).
+In the browser, I see 194 issues (I wrote this 2016-02-11).
 
 I can get them from the API at the command line with this:
 
 ```{r engine='bash'}
-curl -o out.json https://api.github.com/search/issues?q=is:issue+author:timelyportfolio+state:open
-head out.json
+curl -o timelyportolio.json https://api.github.com/search/issues?q=is:issue+author:timelyportfolio+state:open
+head timelyportolio.json
 ```
 
 ### gh
@@ -29,8 +36,8 @@ Here's the relevant GitHub API endpoint:
 
 We can't just provide the search terms as params to `gh()`. They need to be pre-processed into a query string. This little exercise exposed some problems:
 
-  * with `gh`: This structure of what this endpoint returns is [not compatible with the current approach to page traversal](https://github.com/gaborcsardi/gh/issues/33). 
-  * and maybe `httr` as well: [This issue](https://github.com/hadley/httr/issues/335) about the encoding/decoding of `+` may be part of the story here.
+  * with `gh`: The structure of what this endpoint returns is [not compatible with the current approach to page traversal](https://github.com/gaborcsardi/gh/issues/33). 
+  * and maybe with `httr` as well: [This issue](https://github.com/hadley/httr/issues/335) about the encoding/decoding of `+` may be part of the story here.
 
 But that can all be worked around!
 
