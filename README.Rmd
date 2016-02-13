@@ -116,6 +116,12 @@ Down to 5 pages, of size 100. This is documented max and I tried higher numbers 
 
 We could also place an absolute limit on the number of issues. I'm trying 400, since that should truncate Hadley's results. In the app itself, a higher number probably makes sense.
 
+```{r include = FALSE}
+## I want to render thisonce without hitting the rate limit
+Sys.sleep(65)
+```
+
+
 ```{r error = TRUE}
 res <- gh("/search/issues", q = search_q, .limit = 400, per_page = 100) 
 str(res, max.level = 1)

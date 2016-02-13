@@ -26,8 +26,7 @@ head timelyportolio.json
 #>                                  Dload  Upload   Total   Spent    Left  Speed
 #> 
   0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
-100 71147  100 71147    0     0  86468      0 --:--:-- --:--:-- --:--:-- 86448
+100 71147  100 71147    0     0  71424      0 --:--:-- --:--:-- --:--:-- 71504
 #> {
 #>   "total_count": 194,
 #>   "incomplete_results": false,
@@ -151,51 +150,51 @@ search_q <- list(author = author, state = state, is = is)
 res <- gh("/search/issues", q = search_q, .limit = Inf) 
 str(res, max.level = 1)
 #> List of 45
-#>  $ total_count       : int 441
+#>  $ total_count       : int 440
 #>  $ incomplete_results: logi FALSE
 #>  $ items             :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 30
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
-#>  $ NA                :List of 21
+#>  $ NA                :List of 20
 #>  - attr(*, "method")= chr "GET"
 #>  - attr(*, "response")=List of 25
 #>   ..- attr(*, "class")= chr [1:2] "insensitive" "list"
@@ -216,25 +215,25 @@ Ask for 100 results per page:
 res <- gh("/search/issues", q = search_q, .limit = Inf, per_page = 100) 
 str(res, max.level = 1)
 #> List of 15
-#>  $ total_count       : int 441
+#>  $ total_count       : int 440
 #>  $ incomplete_results: logi FALSE
 #>  $ items             :List of 100
 #>   .. [list output truncated]
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 100
 #>   .. [list output truncated]
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 100
 #>   .. [list output truncated]
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 100
 #>   .. [list output truncated]
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
-#>  $ NA                :List of 41
+#>  $ NA                :List of 40
 #>  - attr(*, "method")= chr "GET"
 #>  - attr(*, "response")=List of 25
 #>   ..- attr(*, "class")= chr [1:2] "insensitive" "list"
@@ -253,29 +252,27 @@ We could also place an absolute limit on the number of issues. I'm trying 400, s
 
 ``` r
 res <- gh("/search/issues", q = search_q, .limit = 400, per_page = 100) 
-#> condition in gh_link(gh_response, .token, "next"): GitHub API error: 403 Forbidden
-#>   API rate limit exceeded for jennybc.
 str(res, max.level = 1)
 #> List of 15
-#>  $ total_count       : int 441
+#>  $ total_count       : int 440
 #>  $ incomplete_results: logi FALSE
 #>  $ items             :List of 100
 #>   .. [list output truncated]
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 100
 #>   .. [list output truncated]
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 100
 #>   .. [list output truncated]
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
 #>  $ NA                :List of 100
 #>   .. [list output truncated]
-#>  $ NA                : int 441
+#>  $ NA                : int 440
 #>  $ NA                : logi FALSE
-#>  $ NA                :List of 41
+#>  $ NA                :List of 40
 #>  - attr(*, "method")= chr "GET"
 #>  - attr(*, "response")=List of 25
 #>   ..- attr(*, "class")= chr [1:2] "insensitive" "list"
